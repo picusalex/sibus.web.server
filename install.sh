@@ -3,7 +3,7 @@
 SERVICE="sibus.web.server"
 
 INSTALL_DIR=`pwd`
-SERVICE_PATH="$INSTALL_DIR/sibus.web.server.py"
+SERVICE_PATH="$INSTALL_DIR/web.server.py"
 SYSTEMD_SERVICE="$SERVICE.service"
 SYSTEMD_ORG="$INSTALL_DIR/systemd-config"
 SYSTEMD_TMP="$INSTALL_DIR/$SYSTEMD_SERVICE"
