@@ -100,6 +100,14 @@ def bus_command():
 
     return jsonify({'status': "OK"})
 
+
+@app.route('/speak/<message>')
+def speak_command(message):
+    message = MessageObject(data={"tts": message}, topic="request.audio.tts")
+    busclient.publish(message)
+
+    return jsonify({'status': "OK"})
+
 @socketio.on('connect')
 def connect():
     print("connect ")
