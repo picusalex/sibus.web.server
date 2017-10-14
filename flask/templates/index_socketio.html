@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Socket.io</title>
+
+        <link rel="stylesheet" type="text/css" href="/static/jquery.dataTables.css">
+
+    </head>
+
+    <body>
+        <h3>Communication sur le Bus</h3>
+
+        <form action="/" method="post" id="post_on_bus">
+            <input type="text" name="message" id="message" placeholder="Votre message..." size="50" autofocus />
+            <input type="submit" id="publish_message" value="Publish" />
+        </form>
+
+        <table id="table_events" class="display compact" width="100%">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Origin</th>
+                    <th>Topic</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+
+        <script src="/static/jquery-1.10.1.min.js"></script>
+        <script src="/static/socket.io.js"></script>
+        <script src="/static/jquery.dataTables.js"></script>
+
+
+        <script>
+
+            // Lorsqu'on envoie le formulaire, on transmet le message et on l'affiche sur la page
+            $('#post_on_bus').submit(function () {
+                var message = $('#message').val();
+                socket.emit('message', message); // Transmet le message aux autres
+                $('#message').focus(); // Vide la zone de Chat et remet le focus dessus
+                return false; // Permet de bloquer l'envoi "classique" du formulaire
+            });
+
+            $(document).ready( function () {
+                var t = $('#table_events').DataTable({
+                    "order": [[ 0, "desc" ]],
+                    "pageLength": 15
+                });
+
+                var socket = io.connect('http://localhost:5000');
+
+                socket.on('raw_message', function(data) {
+                    console.log(data);
+                    t.row.add( [ data.date, data.origin, data.topic, JSON.stringify(data.data) ] ).draw( false );
+                })
+
+            } );
+
+
+        </script>
+    </body>
+</html>

@@ -1,0 +1,132 @@
+{% extends "default.html" %}
+
+{% block body %}
+
+<!-- widget grid -->
+    <section id="widget-grid" class="">
+        <!-- row -->
+        <div class="row" id="well_grid">
+
+
+        </div>
+
+    </section>
+{% endblock %}
+
+{% block javascript_include %}
+
+<script src="/static/js/template/mustache.min.js"></script>
+<script src="/static/js/sibus/system.monitor.js"></script>
+
+<script id="entry-template" type="text/x-tmpl-mustache">
+    <div class="well">
+        <div class="row ">
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                <h6 class="text-primary">
+                    <%hostname%>
+                </h6>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                <span class="text"> Uptime <span class="pull-right text-primary"><%uptime%></span> </span>
+            </div>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                <span class="text"> Version <span class="pull-right text-primary"><%node%> - <%release%></span> </span>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-4 col-lg-4">
+                <div class="easy-pie-chart txt-color-teal" data-percent="<%cpu.usage%>" data-pie-size="40">
+                    <span class="percent percent-sign"><%cpu.usage%></span>
+                </div>
+                <span> CPU </i></span>
+            </div>
+
+            <div class="col-xs-12 col-sm-12 col-md-4 col-lg-4">
+                <div class="easy-pie-chart txt-color-orangeDark" data-percent="<%ram.usage%>" data-pie-size="40">
+                    <span class="percent percent-sign"><%ram.usage%></span>
+                </div>
+                <span> RAM </i></span>
+            </div>
+
+            <div class="col-xs-12 col-sm-12 col-md-4 col-lg-4">
+                <div class="easy-pie-chart txt-color-yellow" data-percent="<%swap.usage%>" data-pie-size="40">
+                    <span class="percent percent-sign"><%swap.usage%></span>
+                </div>
+                <span> SWAP </i></span>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <%#networks%>
+            <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                <span> Interface: <%interface%> </span>
+
+                <span class="label bg-color-redLight pull-right"><i class="fa fa-caret-up"></i> <%bytes_sent%></span>
+                &nbsp
+                <span class="label bg-color-greenLight pull-right"><i class="fa fa-caret-down"></i> <%bytes_recv%></span>
+                <br>
+                <span class="font-xs pull-right"><i><%address%></i></span>
+            </div>
+            <%/networks%>
+        </div>
+        <hr>
+        <div class="row">
+            <%#mounts%>
+            <div class="col-xs-6 col-sm-6 col-md-12 col-lg-12">
+                <span class="text"> <%mountpoint%>  </span>
+                <span class="pull-right font-xs"> Libre: <%free%> / <%total%></span>
+                <div class="progress-xs">
+                    <div class="progress-bar bg-color-blue " style="width: <%usage%>%;"></div>
+                </div>
+            </div>
+            <%/mounts%>
+        </div>
+    </div>
+</script>
+
+{% endblock %}
+
+{% block javascript_footer %}
+
+var template   = $("#entry-template").html();
+var customTags = [ '<%', '%>' ];
+Mustache.tags = customTags;
+Mustache.parse(template);
+
+device_list = new DeviceList();
+device_list.template = template;
+
+socketio.on('info.system.monitor', function(data) {
+    console.log(data);
+    var result = device_list.parse_message(data);
+
+    var div_id = result[0];
+    var html = result[1];
+
+    var display_div = $("#"+div_id);
+
+    if (display_div.length == 0) {
+        display_div = $("<div>", {
+            id: div_id
+        }).addClass("col-xs-12 col-sm-3 col-md-3 col-lg-3");
+
+        $("#well_grid").append(display_div);
+    }
+
+    display_div.html(html);
+
+
+
+    runAllCharts();
+
+
+})
+
+
+
+
+{% endblock %}
