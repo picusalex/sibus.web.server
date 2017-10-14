@@ -103,6 +103,7 @@ def bus_command():
 
 @app.route('/speak/<message>')
 def speak_command(message):
+    message = message.replace("+", " ")
     message = MessageObject(data={"tts": message}, topic="request.audio.tts")
     busclient.publish(message)
 
