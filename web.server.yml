@@ -1,7 +1,0 @@
-flask_paths:
-    templates: "./flask/templates"
-    static: "./flask/static"
-
-web_server:
-    port: 5000
-
