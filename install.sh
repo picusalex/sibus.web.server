@@ -3,7 +3,7 @@
 SERVICE="sibus.web.server"
 
 INSTALL_DIR=`pwd`
-SERVICE_PATH="$INSTALL_DIR/web.server.py"
+SERVICE_PATH="$INSTALL_DIR/sibus.server.py"
 SYSTEMD_SERVICE="$SERVICE.service"
 SYSTEMD_ORG="$INSTALL_DIR/systemd-config"
 SYSTEMD_TMP="$INSTALL_DIR/$SYSTEMD_SERVICE"
@@ -22,7 +22,7 @@ sudo chmod +x $SERVICE_PATH
 
 echo " # Checking service $SERVICE dependencies"
 
-sudo pip install --upgrade flask flask_socketio sibus_lib
+sudo pip install --upgrade flask sibus_lib
 
 echo " # Patching service $SERVICE systemd config file..."
 sed 's|<SCRIPT_PATH>|'$SERVICE_PATH'|g' $SYSTEMD_ORG > "/tmp/tmp.systemd"
