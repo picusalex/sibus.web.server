@@ -32,11 +32,11 @@ class DicTopic:
             if t is None:
                 logger.debug(" !!> Value not found for path: %s (near %s)" % (path_string, key))
                 return safe
-        logger.debug(" ==> Value found: %s" % str(t))
+        logger.debug(" ==> Value found: %s" % unicode(t))
         return t
 
     def set_cache_value(self, path_string, value):
-        logger.debug("Setting cache value: %s=%s" % (path_string, str(value)))
+        logger.debug("Setting cache value: %s=%s" % (path_string, unicode(value)))
         path = path_string.strip("/").split("/")
         t = self.sibus_values
         for key in path[1:-1]:
@@ -89,9 +89,10 @@ def jeedom():
             "timestamp": cmd_timestamp
         }
         logger.info(" ++ Jeedom to MQTT gateway: topic=%s, payload=%s" % (cmd_topic, str(payload)))
-        busclient.mqtt_publish(topic="sibus/%s" % cmd_topic,
-                               payload=payload,
-                               retain=True)
+        if not busclient.mqtt_publish(topic="sibus/%s" % cmd_topic,
+                                      payload=payload,
+                                      retain=True):
+            return make_response(jsonify({'error': "MQTT publish error", 'status': 500}), 500)
         update = True
     else:
         update = False
