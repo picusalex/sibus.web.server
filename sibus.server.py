@@ -5,7 +5,7 @@ import socket
 from flask import Flask, make_response, jsonify, request
 
 from sibus_lib import sibus_init, BusClient
-from sibus_lib.utils import parse_num, datetime_now_float
+from sibus_lib.utils import parse_num, datetime_now_float, handle_signals
 
 SERVICE_NAME = "system.server"
 logger, cfg_data = sibus_init(SERVICE_NAME)
@@ -65,6 +65,31 @@ def torque():
     return "OK!"
 
 
+@app.route('/service/tts', methods=['GET'])
+def action():
+    logger.info("=========== Action request =============")
+    for key in ["message"]:
+        if key not in request.args:
+            logger.error("!! GET /jeedom : Param '%s' not found" % key)
+            return make_response(jsonify({'error': "Param '%s' not found" % key, 'status': 412}), 412)
+
+    cmd_value = request.args["message"]
+
+    cmd_topic = "sibus/action/multiroom/TTS"
+    payload = {
+        "value": cmd_value,
+        "timestamp": datetime_now_float()
+    }
+    logger.info(" ++ TTS action request to MQTT: topic=%s, payload=%s" % (cmd_topic, str(payload)))
+    if not busclient.mqtt_publish(topic=cmd_topic,
+                                  payload=payload,
+                                  retain=False):
+        return make_response(jsonify({'error': "MQTT publish error", 'status': 500}), 500)
+
+    return make_response(jsonify({
+        'status': 0
+    }), 200)
+
 @app.route('/jeedom', methods=['GET'])
 def jeedom():
     logger.info("=========== Jeedom call =============")
@@ -80,16 +105,16 @@ def jeedom():
     old_value = sibus_values.get_cache_value(path_string=cmd_topic)
     cmd_timestamp = datetime_now_float()
 
-    sibus_values.set_cache_value(path_string=cmd_topic, value=cmd_value)
-
     if cmd_value <> old_value or "force" in request.args:
+        sibus_values.set_cache_value(path_string=cmd_topic, value=cmd_value)
+
         payload = {
             "value": cmd_value,
             "old": old_value,
             "timestamp": cmd_timestamp
         }
         logger.info(" ++ Jeedom to MQTT gateway: topic=%s, payload=%s" % (cmd_topic, str(payload)))
-        if not busclient.mqtt_publish(topic="sibus/%s" % cmd_topic,
+        if not busclient.mqtt_publish(topic="sibus/info/%s" % cmd_topic,
                                       payload=payload,
                                       retain=True):
             return make_response(jsonify({'error': "MQTT publish error", 'status': 500}), 500)
@@ -108,7 +133,20 @@ def jeedom():
     }), 200)
 
 
+def on_busmessage(topic, payload):
+    logger.info(payload)
+
+
 if __name__ == '__main__':
-    busclient = BusClient(socket.getfqdn(), SERVICE_NAME)
+    busclient = BusClient(socket.getfqdn(), SERVICE_NAME, onmessage_cb=on_busmessage)
+
+    # busclient.mqtt_subscribe("sibus/jeedom/#")
+
+    busclient.start()
+
+    handle_signals()
 
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+    busclient.stop()
+    logger.info("Terminated !")
